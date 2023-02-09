@@ -1,0 +1,13 @@
+name: auto-test
+run-name: ucore-auto-test
+on: [push]
+jobs:
+  test-ucore:
+    runs-on: ubuntu-latest
+    container:
+        image: tclab/ucore-env
+    steps:
+      - uses: actions/checkout@v3
+      - run: git clone https://github.com/LearningOS/uCore-Tutorial-Test-2023S.git user
+      - run: make test BASE=1
+      
