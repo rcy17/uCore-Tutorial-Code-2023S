@@ -53,6 +53,16 @@ uint64 sys_gettimeofday(TimeVal *val, int _tz) // TODO: implement sys_gettimeofd
 * LAB1: you may need to define sys_task_info here
 */
 
+uint64 sys_sbrk(int n)
+{
+        uint64 addr;
+        struct proc *p = curr_proc();
+        addr = p->program_brk;
+        if(growproc(n) < 0)
+                return -1;
+        return addr;
+}
+
 extern char trap_page[];
 
 void syscall()
@@ -79,6 +89,9 @@ void syscall()
 	case SYS_gettimeofday:
 		ret = sys_gettimeofday((TimeVal *)args[0], args[1]);
 		break;
+	case SYS_sbrk:
+                ret = sys_sbrk(args[0]);
+                break;
 	/*
 	* LAB1: you may need to add SYS_taskinfo case here
 	*/

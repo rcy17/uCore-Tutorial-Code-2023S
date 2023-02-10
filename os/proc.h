@@ -38,6 +38,8 @@ struct proc {
 	struct trapframe *trapframe; // data page for trampoline.S
 	struct context context; // swtch() here to run process
 	uint64 max_page;
+	uint64 program_brk;
+	uint64 heap_bottom;
 	/*
 	* LAB1: you may need to add some new fields here
 	*/
@@ -56,5 +58,7 @@ void yield();
 struct proc *allocproc();
 // swtch.S
 void swtch(struct context *, struct context *);
+
+int growproc(int n);
 
 #endif // PROC_H
