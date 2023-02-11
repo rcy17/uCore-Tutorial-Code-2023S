@@ -69,12 +69,20 @@ void usertrap()
 			trapframe->epc += 4;
 			syscall();
 			break;
-		case StoreMisaligned:
 		case StorePageFault:
+		case LoadPageFault:
+			{
+				uint64 addr = r_stval();
+				if(lazy_alloc(addr) < 0){
+					errorf("lazy_aolloc() failed!\n");
+					exit(-2);
+				}
+				break;
+	       		}		
+		case StoreMisaligned:
 		case InstructionMisaligned:
 		case InstructionPageFault:
 		case LoadMisaligned:
-		case LoadPageFault:
 			errorf("%d in application, bad addr = %p, bad instruction = %p, "
 			       "core dumped.",
 			       cause, r_stval(), trapframe->epc);
@@ -120,4 +128,35 @@ void usertrapret()
 	uint64 fn = TRAMPOLINE + (userret - trampoline);
 	tracef("return to user @ %p", trapframe->epc);
 	((void (*)(uint64, uint64))fn)(TRAPFRAME, satp);
+}
+
+
+int lazy_alloc(uint64 addr){
+	struct proc *p = curr_proc();
+  	// page-faults on a virtual memory address higher than any allocated with sbrk()
+  	// this should be >= not > !!!
+	//printf("lazy_alloc here!\n");
+	if (addr >= p->program_brk) {
+		errorf("lazy_alloc: access invalid address");
+		return -1;
+	}
+
+	if (addr < p->heap_bottom) {
+		errorf("lazy_alloc: access address below stack");
+		return -2;
+	}
+
+	uint64 pa = PGROUNDDOWN(addr);
+	char* mem = kalloc();
+	if (mem == 0) {
+		errorf("lazy_alloc: kalloc failed");
+		return -3;
+	}
+  
+	memset(mem, 0, PGSIZE);
+	if(mappages(p->pagetable, pa, PGSIZE, (uint64)mem, PTE_W|PTE_X|PTE_R|PTE_U) != 0){
+		kfree(mem);
+		return -4;
+	}
+	return 0;
 }

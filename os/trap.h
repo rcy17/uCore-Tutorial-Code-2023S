@@ -71,4 +71,6 @@ enum Interrupt {
 void trap_init();
 void usertrapret();
 
+int lazy_alloc(uint64 addr);
+
 #endif // TRAP_H
