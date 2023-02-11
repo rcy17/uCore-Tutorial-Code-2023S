@@ -4,6 +4,7 @@
 #include "syscall_ids.h"
 #include "timer.h"
 #include "trap.h"
+#include "proc.h"
 
 uint64 sys_write(int fd, uint64 va, uint len)
 {
@@ -46,6 +47,18 @@ uint64 sys_gettimeofday(TimeVal *val, int _tz) // TODO: implement sys_gettimeofd
 	return 0;
 }
 
+uint64 sys_sbrk(int n)
+{
+	uint64 addr;
+        struct proc *p = curr_proc();
+        addr = p->program_brk;
+        if(growproc(n) < 0)
+                return -1;
+        return addr;	
+}
+
+
+
 // TODO: add support for mmap and munmap syscall.
 // hint: read through docstrings in vm.c. Watching CH4 video may also help.
 // Note the return value and PTE flags (especially U,X,W,R)
@@ -78,6 +91,9 @@ void syscall()
 		break;
 	case SYS_gettimeofday:
 		ret = sys_gettimeofday((TimeVal *)args[0], args[1]);
+		break;
+	case SYS_sbrk:
+		ret = sys_sbrk(args[0]);
 		break;
 	/*
 	* LAB1: you may need to add SYS_taskinfo case here
